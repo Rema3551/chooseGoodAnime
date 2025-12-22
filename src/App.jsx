@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Star, Heart, Loader2, Grid, LayoutGrid, Columns, Palette, Moon, Sun } from 'lucide-react';
+import { Search, Filter, Star, Heart, Loader2, Grid, LayoutGrid, Columns, Palette, Moon, Sun, ZoomIn, ZoomOut } from 'lucide-react';
 
 import { getTopAnime, searchAnime, getAnimeGenres, searchAniList, getAnimeRecommendations } from './services/api';
 import AnimeDetails from './components/AnimeDetails';
@@ -468,133 +468,214 @@ function App() {
 
 
             {/* Header */}
+            {/* Header */}
             <header style={{
                 borderBottom: '1px solid var(--border-color)',
-                padding: 'var(--spacing-sm) 0',
+                padding: '1rem 0', // Increased padding slightly for breathability
                 position: 'sticky',
                 top: 0,
-                backgroundColor: 'var(--bg-secondary)', // Use bg-secondary for header
-                zIndex: 10
+                backgroundColor: 'rgba(15, 23, 42, 0.85)', // Modern Glassmorphism
+                backdropFilter: 'blur(16px)',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+                zIndex: 50
             }}>
-                <div className="container" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: '20px' }}>
+                <div className="container header-grid">
+                    {/* Logo Section */}
                     <div className="logo flex items-center gap-sm">
-                        <h1
+                        <div
                             onClick={() => setSelectedAnime(null)}
-                            style={{ fontSize: '1.5rem', background: 'linear-gradient(to right, var(--accent-primary), var(--text-accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            ChooseGoodAnime
-                        </h1>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center w-full">
-                        {/* Search Mode Tabs */}
-                        <div className="flex gap-2 mb-2">
-                            <button
-                                onClick={() => { setSearchMode('title'); setSearchQuery(''); }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                cursor: 'pointer',
+                                position: 'relative' // For absolute glow if needed, but we use filter here
+                            }}
+                        >
+                            {/* Glow Effect Layer behind (optional) or just Drop Shadow */}
+                            <img
+                                src={`/logo.png?v=${Date.now()}`}
+                                alt="ChooseGoodAnime Logo"
                                 style={{
-                                    padding: '4px 12px',
-                                    borderRadius: '16px',
-                                    fontSize: '0.8rem',
-                                    background: searchMode === 'title' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                                    color: searchMode === 'title' ? 'white' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    fontWeight: 'bold'
+                                    height: '180px',
+                                    width: 'auto',
+                                    // Strong colored glow to make it POP against the dark glass
+                                    filter: 'drop-shadow(0 0 20px rgba(99, 102, 241, 0.6)) drop-shadow(0 0 40px rgba(168, 85, 247, 0.4))',
+                                    transition: 'filter 0.3s ease'
                                 }}
-                            >
-                                🔍 {t.searchPlaceholder}
-                            </button>
-                            <button
-                                onClick={() => { setSearchMode('vibe'); setSearchQuery(''); }}
-                                style={{
-                                    padding: '4px 12px',
-                                    borderRadius: '16px',
-                                    fontSize: '0.8rem',
-                                    background: searchMode === 'vibe' ? 'linear-gradient(45deg, #FF6B6B, #FF8E53)' : 'var(--bg-secondary)',
-                                    color: searchMode === 'vibe' ? 'white' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                ✨ {lang === 'fr' ? 'Par Ambiance' : 'By Vibe'}
-                            </button>
-                            <button
-                                onClick={() => { setSearchMode('similar'); setSearchQuery(''); }}
-                                style={{
-                                    padding: '4px 12px',
-                                    borderRadius: '16px',
-                                    fontSize: '0.8rem',
-                                    background: searchMode === 'similar' ? 'var(--accent-primary)' : 'var(--bg-secondary)', // Different color?
-                                    color: searchMode === 'similar' ? 'white' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                👯 {lang === 'fr' ? 'Similaire à...' : 'Similar to...'}
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSearch} className="search-bar" style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            background: 'var(--bg-secondary)',
-                            padding: '10px 20px',
-                            borderRadius: 'var(--radius-lg)',
-                            width: '100%',
-                            maxWidth: '600px', // Increased max-width for prominence
-                            border: searchMode === 'vibe' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                        }}>
-                            <Search size={20} color="var(--text-secondary)" />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder={
-                                    searchMode === 'title' ? t.searchPlaceholder :
-                                        searchMode === 'vibe' ? t.vibeSearchPlaceholder :
-                                            lang === 'fr' ? "Entrez un titre d'anime (ex: Naruto)..." : "Enter anime title..."
-                                }
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'var(--text-primary)',
-                                    marginLeft: '12px',
-                                    width: '100%',
-                                    outline: 'none',
-                                    fontSize: '1rem'
-                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 30px rgba(99, 102, 241, 0.8)) drop-shadow(0 0 50px rgba(168, 85, 247, 0.6))'}
+                                onMouseLeave={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 20px rgba(99, 102, 241, 0.6)) drop-shadow(0 0 40px rgba(168, 85, 247, 0.4))'}
                             />
-                        </form>
+                        </div>
                     </div>
 
+                    {/* Search Section */}
+                    <div className="flex flex-col items-center justify-center w-full" style={{ position: 'relative' }}>
+
+                        {/* Search Input Container */}
+                        <div style={{
+                            width: '100%',
+                            maxWidth: '550px',
+                            position: 'relative'
+                        }}>
+                            {/* Tabs integrated on top-left of search bar for "Folder" look or Pills */}
+                            <div className="flex gap-2" style={{
+                                position: 'absolute',
+                                top: '-28px',
+                                left: '10px',
+                                zIndex: 1
+                            }}>
+                                <button
+                                    onClick={() => { setSearchMode('title'); setSearchQuery(''); }}
+                                    style={{
+                                        padding: '4px 12px',
+                                        borderTopLeftRadius: '8px',
+                                        borderTopRightRadius: '8px',
+                                        fontSize: '0.75rem',
+                                        background: searchMode === 'title' ? 'var(--bg-secondary)' : 'transparent',
+                                        color: searchMode === 'title' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                        borderBottom: searchMode === 'title' ? '2px solid var(--accent-primary)' : 'none',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold',
+                                        opacity: searchMode === 'title' ? 1 : 0.7
+                                    }}
+                                >
+                                    🔍 {t.searchPlaceholder}
+                                </button>
+                                <button
+                                    onClick={() => { setSearchMode('vibe'); setSearchQuery(''); }}
+                                    style={{
+                                        padding: '4px 12px',
+                                        borderTopLeftRadius: '8px',
+                                        borderTopRightRadius: '8px',
+                                        fontSize: '0.75rem',
+                                        background: searchMode === 'vibe' ? 'var(--bg-secondary)' : 'transparent',
+                                        color: searchMode === 'vibe' ? '#FF6B6B' : 'var(--text-secondary)',
+                                        borderBottom: searchMode === 'vibe' ? '2px solid #FF6B6B' : 'none',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold',
+                                        opacity: searchMode === 'vibe' ? 1 : 0.7
+                                    }}
+                                >
+                                    ✨ {lang === 'fr' ? 'Ambiance' : 'Vibe'}
+                                </button>
+                                <button
+                                    onClick={() => { setSearchMode('similar'); setSearchQuery(''); }}
+                                    style={{
+                                        padding: '4px 12px',
+                                        borderTopLeftRadius: '8px',
+                                        borderTopRightRadius: '8px',
+                                        fontSize: '0.75rem',
+                                        background: searchMode === 'similar' ? 'var(--bg-secondary)' : 'transparent',
+                                        color: searchMode === 'similar' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                        borderBottom: searchMode === 'similar' ? '2px solid var(--accent-primary)' : 'none',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold',
+                                        opacity: searchMode === 'similar' ? 1 : 0.7
+                                    }}
+                                >
+                                    👯 {lang === 'fr' ? 'Similaire' : 'Similar'}
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSearch} className="search-bar" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                background: 'var(--bg-secondary)',
+                                padding: '12px 20px',
+                                borderRadius: '12px',
+                                border: `1px solid ${searchMode === 'vibe' ? '#FF6B6B' : 'var(--border-color)'}`,
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                transition: 'all 0.3s ease'
+                            }}>
+                                <Search size={20} color={searchMode === 'vibe' ? '#FF6B6B' : "var(--text-secondary)"} />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder={
+                                        searchMode === 'title' ? t.searchPlaceholder :
+                                            searchMode === 'vibe' ? t.vibeSearchPlaceholder :
+                                                lang === 'fr' ? "Entrez un titre d'anime (ex: Naruto)..." : "Enter anime title..."
+                                    }
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--text-primary)',
+                                        marginLeft: '12px',
+                                        width: '100%',
+                                        outline: 'none',
+                                        fontSize: '1rem',
+                                        fontWeight: '500'
+                                    }}
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery('')}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </form>
+                        </div>
+                    </div>
+
+                    {/* User Actions Section */}
                     <div className="user-actions flex items-center gap-md" style={{ justifyContent: 'flex-end' }}>
+
+                        <div style={{ height: '24px', width: '1px', background: 'var(--border-color)', margin: '0 8px' }}></div>
+
                         {/* Day/Night Toggle */}
                         <button
                             onClick={() => setCurrentTheme(currentTheme === 'theme-midnight' ? 'theme-daylight' : 'theme-midnight')}
                             style={{
-                                color: 'var(--text-primary)',
+                                color: 'var(--text-secondary)',
                                 padding: '8px',
-                                background: 'var(--bg-card)',
-                                borderRadius: '50%',
+                                background: 'transparent',
+                                borderRadius: '8px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                border: '1px solid var(--border-color)'
+                                border: '1px solid transparent', // preset for hover
+                                transition: 'all 0.2s',
+                                cursor: 'pointer'
                             }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-card)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                             title={currentTheme === 'theme-midnight' ? "Switch to Day Mode" : "Passer en Mode Nuit"}
                         >
                             {currentTheme === 'theme-midnight' ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
 
-                        <button style={{ color: 'var(--text-primary)' }} onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}>
+                        <button
+                            onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
+                            style={{
+                                color: 'var(--text-primary)',
+                                fontWeight: 'bold',
+                                background: 'var(--bg-card)',
+                                border: '1px solid var(--border-color)',
+                                padding: '6px 12px',
+                                borderRadius: '8px',
+                                cursor: 'pointer'
+                            }}
+                        >
                             {lang === 'fr' ? '🇺🇸 EN' : '🇫🇷 FR'}
                         </button>
-                        <button style={{ color: 'var(--text-primary)' }}>{t.connect}</button>
+
+                        <button style={{
+                            background: 'var(--text-primary)',
+                            color: 'var(--bg-primary)',
+                            border: 'none',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}>
+                            {t.connect}
+                        </button>
                     </div>
                 </div>
             </header>
@@ -757,30 +838,46 @@ function App() {
                                 </h2>
 
                                 <div className="flex items-center gap-sm">
-                                    {/* Grid Controls */}
-                                    <div className="flex bg-secondary rounded-lg p-1" style={{ background: 'var(--bg-secondary)', borderRadius: '8px', padding: '4px' }}>
-                                        {[2, 4, 6, 8].map(cols => (
-                                            <button
-                                                key={cols}
-                                                onClick={() => setGridColumns(cols)}
-                                                style={{
-                                                    padding: '4px 8px',
-                                                    borderRadius: '6px',
-                                                    background: gridColumns === cols ? 'var(--accent-primary)' : 'transparent',
-                                                    color: gridColumns === cols ? 'white' : 'var(--text-secondary)',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    fontWeight: 'bold',
-                                                    fontSize: '0.8rem'
-                                                }}
-                                                title={`${cols} columns`}
-                                            >
-                                                {cols}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    {loading && <Loader2 className="animate-spin" size={24} style={{ marginRight: '8px' }} />}
 
-                                    {loading && <Loader2 className="animate-spin" size={24} />}
+                                    {/* Grid Controls: Zoom In/Out */}
+                                    <div className="flex bg-secondary rounded-lg p-1 gap-1" style={{ background: 'var(--bg-secondary)', borderRadius: '8px', padding: '4px', display: 'flex', alignItems: 'center' }}>
+                                        <button
+                                            onClick={() => setGridColumns(prev => Math.max(2, prev - 1))}
+                                            disabled={gridColumns <= 2}
+                                            style={{
+                                                padding: '6px',
+                                                borderRadius: '6px',
+                                                background: 'transparent',
+                                                color: gridColumns <= 2 ? 'var(--text-muted)' : 'var(--text-secondary)',
+                                                border: 'none',
+                                                cursor: gridColumns <= 2 ? 'default' : 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}
+                                            title="Plus grand (Zoom In)"
+                                        >
+                                            <ZoomIn size={20} />
+                                        </button>
+                                        <div style={{ width: '1px', height: '16px', background: 'var(--border-color)', margin: '0 4px' }}></div>
+                                        <button
+                                            onClick={() => setGridColumns(prev => Math.min(8, prev + 1))}
+                                            disabled={gridColumns >= 8}
+                                            style={{
+                                                padding: '6px',
+                                                borderRadius: '6px',
+                                                background: 'transparent',
+                                                color: gridColumns >= 8 ? 'var(--text-muted)' : 'var(--text-secondary)',
+                                                border: 'none',
+                                                cursor: gridColumns >= 8 ? 'default' : 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}
+                                            title="Plus petit (Zoom Out)"
+                                        >
+                                            <ZoomOut size={20} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
