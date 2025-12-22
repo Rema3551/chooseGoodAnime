@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Default / Common Variables */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+}
+
+/* Theme: Midnight (Default Dark) */
+.theme-midnight {
+  --bg-primary: #0b0c0f;
+  --bg-secondary: #15171e;
+  --bg-card: #1e212b;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --border-color: #2d3748;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+  --glow-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+/* Theme: Daylight (Light Mode) */
+.theme-daylight {
+  --bg-primary: #f3f4f6;
+  /* Light Gray */
+  --bg-secondary: #ffffff;
+  /* White */
+  --bg-card: #ffffff;
+  --text-primary: #111827;
+  /* Dark Gray */
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --accent-primary: #6366f1;
+  /* Indigo */
+  --accent-hover: #4f46e5;
+  --border-color: #e5e7eb;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --glow-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+}
+
+/* Theme: Cyberpunk */
+.theme-cyberpunk {
+  --bg-primary: #050510;
+  --bg-secondary: #121225;
+  --bg-card: #181926;
+  --text-primary: #ffe21c;
+  /* Yellow */
+  --text-secondary: #00f0ff;
+  /* Cyan */
+  --text-muted: #ff003c;
+  /* Red */
+  --accent-primary: #ff003c;
+  --accent-hover: #d90032;
+  --border-color: #00f0ff;
+  --card-shadow: 4px 4px 0px rgba(0, 240, 255, 0.4);
+  --glow-shadow: 0 0 10px #00f0ff, 0 0 20px #ff003c;
+}
+
+/* Theme: Zen */
+.theme-zen {
+  --bg-primary: #e8e6e1;
+  /* Stone/Paper */
+  --bg-secondary: #dcddd8;
+  --bg-card: #f0efe9;
+  --text-primary: #2c2c2a;
+  /* Ink Black */
+  --text-secondary: #5c5c59;
+  --text-muted: #8c8c89;
+  --accent-primary: #4a5c48;
+  /* Sage Green */
+  --accent-hover: #3d4d3b;
+  --border-color: #c0c0bb;
+  --card-shadow: none;
+  --glow-shadow: none;
+}
+
+/* Theme: Pop */
+.theme-pop {
+  --bg-primary: #fff0f5;
+  /* Lavender Blush */
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #2d0e74;
+  /* Dark Purple */
+  --text-secondary: #9d4edd;
+  --text-muted: #c77dff;
+  --accent-primary: #ff007f;
+  /* Bright Pink */
+  --accent-hover: #d6006c;
+  --border-color: #e0aaff;
+  --card-shadow: 6px 6px 0px #ff007f;
+  --glow-shadow: 2px 2px 0px #9d4edd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Layout System */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  /* Fixed Sidebar + Fluid Content */
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+    /* Stack on smaller screens */
+  }
+}
+
+/* Sidebar Styling */
+.sidebar-panel {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  position: sticky;
+  top: 6rem;
+  /* Stick below header */
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+}
+
+/* Base Elements */
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  border-radius: var(--radius-sm);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-card);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
