@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
     DndContext,
     closestCenter,
+    pointerWithin,
+    rectIntersection,
     KeyboardSensor,
     PointerSensor,
     useSensor,
@@ -18,12 +20,13 @@ import {
     sortableKeyboardCoordinates,
     useSortable,
     horizontalListSortingStrategy,
-    verticalListSortingStrategy
+    verticalListSortingStrategy,
+    rectSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
 import { Search, Download, Sparkles, Trash2, Plus } from 'lucide-react';
-import { searchAnime, getAnimeRecommendations } from '../services/api';
+import { searchAnime, getAnimeRecommendations, getAnimeById, getTopAnime } from '../services/api';
 
 // --- Components ---
 
@@ -122,7 +125,6 @@ const TierRow = ({ tier, items }) => {
                 width: '120px',
                 minHeight: '120px',
                 background: tier.color,
-                background: tier.color,
                 color: '#1e293b', // Keeping dark text on colored labels is usually fine, or check contrast
                 display: 'flex',
                 alignItems: 'center',
@@ -155,7 +157,7 @@ const TierRow = ({ tier, items }) => {
                 minHeight: '120px',
                 transition: 'background 0.3s ease'
             }}>
-                <SortableContext items={items.map(i => i.id)} strategy={horizontalListSortingStrategy}>
+                <SortableContext items={items.map(i => i.id)} strategy={rectSortingStrategy}>
                     {items.map(item => (
                         <SortableItem key={item.id} id={item.id} anime={item.data} compact />
                     ))}
@@ -177,17 +179,15 @@ const BankDroppable = ({ items, removeFromList }) => {
     return (
         <div ref={setNodeRef} style={{
             minHeight: '300px',
-            minHeight: '300px',
             border: '2px dashed var(--border-color)',
             borderRadius: '12px',
             padding: '16px',
             display: 'flex',
             flexWrap: 'wrap',
             gap: '12px',
-            background: 'var(--bg-card)',
-            border: '2px dashed var(--border-color)'
+            background: 'var(--bg-card)'
         }}>
-            <SortableContext items={bankItems.map(i => i.id)} strategy={horizontalListSortingStrategy}>
+            <SortableContext items={bankItems.map(i => i.id)} strategy={rectSortingStrategy}>
                 {bankItems.map(item => (
                     <div key={item.id} style={{ position: 'relative' }}>
                         <SortableItem id={item.id} anime={item.data} />
@@ -241,6 +241,87 @@ export default function TierListMaker({ t, lang }) {
     // Recommendations
     const [recommendations, setRecommendations] = useState([]);
     const [loadingRecs, setLoadingRecs] = useState(false);
+    const [initializing, setInitializing] = useState(false);
+    const [currentTopAnimePage, setCurrentTopAnimePage] = useState(1);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+    // Initial Population
+    // Initial Population
+    useEffect(() => {
+        const initializeBank = async () => {
+            if (items.length > 0) return;
+
+            setInitializing(true);
+            try {
+                // Fetch top anime by popularity
+                const topAnimeData = await getTopAnime(1, 'bypopularity');
+                if (topAnimeData && topAnimeData.data) {
+                    const top20 = topAnimeData.data.slice(0, 20);
+
+                    const newItems = top20.map(anime => ({
+                        id: String(anime.mal_id),
+                        tier: 'bank',
+                        data: anime
+                    }));
+
+                    setItems(prev => [...prev, ...newItems]);
+                    setCurrentTopAnimePage(2); // Next page for future
+                }
+            } catch (err) {
+                console.error("Failed to initialize bank with top anime", err);
+            } finally {
+                setInitializing(false);
+            }
+        };
+
+        initializeBank();
+    }, []); // Run once on mount
+
+    // Auto-refill Bank
+    useEffect(() => {
+        const checkAndRefillBank = async () => {
+            const bankCount = items.filter(i => i.tier === 'bank').length;
+
+            if (bankCount < 5 && !isLoadingMore && !initializing) {
+                setIsLoadingMore(true);
+                console.log(`Bank low (${bankCount}), fetching page ${currentTopAnimePage}...`);
+
+                try {
+                    const topAnimeData = await getTopAnime(currentTopAnimePage, 'bypopularity');
+                    if (topAnimeData && topAnimeData.data) {
+                        const newRawItems = topAnimeData.data;
+
+                        // Filter duplicates
+                        const uniqueNewItems = newRawItems.filter(anime =>
+                            !items.some(existing => existing.id === String(anime.mal_id))
+                        );
+
+                        const formattedItems = uniqueNewItems.map(anime => ({
+                            id: String(anime.mal_id),
+                            tier: 'bank',
+                            data: anime
+                        }));
+
+                        if (formattedItems.length > 0) {
+                            setItems(prev => [...prev, ...formattedItems]);
+                            setCurrentTopAnimePage(prev => prev + 1);
+                        } else {
+                            // Loop protection if page returned only duplicates? try next page
+                            setCurrentTopAnimePage(prev => prev + 1);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error auto-refilling bank", err);
+                } finally {
+                    setIsLoadingMore(false);
+                }
+            }
+        };
+
+        const timeout = setTimeout(checkAndRefillBank, 1000); // 1s Debounce check to let state settle
+        return () => clearTimeout(timeout);
+
+    }, [items, currentTopAnimePage, isLoadingMore, initializing]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // Prevent accidental drags
@@ -435,7 +516,7 @@ export default function TierListMaker({ t, lang }) {
             {/* Main Workspace */}
             <DndContext
                 sensors={sensors}
-                collisionDetection={closestCenter}
+                collisionDetection={pointerWithin}
                 onDragOver={(event) => {
                     const { active, over } = event;
                     if (!over) return;

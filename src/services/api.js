@@ -6,9 +6,13 @@ const BASE_URL = 'https://api.jikan.moe/v4';
  */
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const getTopAnime = async (page = 1) => {
+export const getTopAnime = async (page = 1, filter = '') => {
     try {
-        const response = await fetch(`${BASE_URL}/top/anime?page=${page}`);
+        let url = `${BASE_URL}/top/anime?page=${page}`;
+        if (filter) {
+            url += `&filter=${filter}`;
+        }
+        const response = await fetch(url);
         if (!response.ok) {
             if (response.status === 429) {
                 console.warn('Rate limit reached, waiting...');
@@ -271,6 +275,28 @@ export const getAniListHighResImage = async (title) => {
         return null;
     }
 };
+
+const getAnimeById = async (id) => {
+    try {
+        await delay(350); // Rate limit protection
+        const response = await fetch(`${BASE_URL}/anime/${id}`);
+        if (!response.ok) {
+            if (response.status === 429) {
+                console.warn(`Rate limit reached for ID ${id}, waiting...`);
+                await delay(1000);
+                return getAnimeById(id); // Retry once
+            }
+            throw new Error(`Failed to fetch anime ${id}`);
+        }
+        const data = await response.json();
+        return data.data;
+    } catch (error) {
+        console.error(`Error fetching anime ${id}:`, error);
+        return null;
+    }
+};
+
+export { getAnimeById };
 
 export const getAnimeGenres = async () => {
     try {
