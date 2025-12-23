@@ -7,6 +7,7 @@ import AnimeCard3D from './components/AnimeCard3D';
 import HeroBanner from './components/HeroBanner';
 import SurpriseReveal from './components/SurpriseReveal';
 import MultiSelect from './components/MultiSelect';
+import TierListMaker from './components/TierListMaker';
 import { VF_GOLDEN_LIST, VF_PRODUCERS } from './data/golden_list_vf';
 import { getLocalizedGenre } from './data/genre_translations';
 
@@ -111,6 +112,7 @@ function App() {
     const [featuredAnime, setFeaturedAnime] = useState(null);
     const [featuredBannerUrl, setFeaturedBannerUrl] = useState(null);
     const [surpriseMode, setSurpriseMode] = useState(false);
+    const [tierListMode, setTierListMode] = useState(false); // New Tier List Mode
     const [searchMode, setSearchMode] = useState('title'); // 'title', 'vibe', 'similar'
 
     // Watchlist State
@@ -525,6 +527,8 @@ function App() {
 
 
 
+
+
     return (
         <div className={`app-container ${currentTheme}`} style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh', transition: 'background 0.3s, color 0.3s' }}>
 
@@ -533,7 +537,6 @@ function App() {
             {/* Header */}
             {/* Header */}
             <header style={{
-                borderBottom: '1px solid var(--border-color)',
                 padding: '1rem 0', // Increased padding slightly for breathability
                 position: 'sticky',
                 top: 0,
@@ -547,7 +550,7 @@ function App() {
                     {/* Logo Section */}
                     <div className="logo flex items-center gap-sm">
                         <div
-                            onClick={() => setSelectedAnime(null)}
+                            onClick={() => { setSelectedAnime(null); setTierListMode(false); }}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -736,8 +739,10 @@ function App() {
                             borderRadius: '8px',
                             fontWeight: 'bold',
                             cursor: 'pointer'
-                        }}>
-                            {t.connect}
+                        }}
+                            onClick={() => setTierListMode(true)}
+                        >
+                            {lang === 'fr' ? '🏆 Tier List' : '🏆 Tier List Maker'}
                         </button>
                     </div>
                 </div>
@@ -746,7 +751,11 @@ function App() {
             {/* Main Content */}
             <main className="container layout-grid" style={{ paddingTop: '2rem' }}>
 
-                {selectedAnime ? (
+                {tierListMode ? (
+                    <div style={{ gridColumn: '1 / -1', minHeight: '80vh' }}>
+                        <TierListMaker t={t} lang={lang} />
+                    </div>
+                ) : selectedAnime ? (
                     <div style={{ gridColumn: '1 / -1', minHeight: '80vh' }}>
                         <AnimeDetails
                             anime={selectedAnime}

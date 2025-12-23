@@ -28,6 +28,22 @@
   --glow-shadow: 0 0 20px var(--accent-glow);
 }
 
+.theme-daylight {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #e2e8f0;
+  --bg-card: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #6366f1;
+  --accent-glow: rgba(139, 92, 246, 0.3);
+  --border-color: #cbd5e1;
+  --success: #16a34a;
+  --warning: #ca8a04;
+  --error: #dc2626;
+  --glow-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+}
+
 
 
 * {
