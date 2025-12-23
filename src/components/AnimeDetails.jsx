@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Star, MonitorPlay, Calendar, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Star, MonitorPlay, Calendar, ExternalLink, Heart } from 'lucide-react';
 import { getAnimeStreaming } from '../services/api';
+import WatchlistButton from './WatchlistButton';
 
-function AnimeDetails({ anime, onBack, t, lang, isVF = false }) {
+function AnimeDetails({ anime, onBack, t, lang, isVF = false, isFavorite, onToggleWatchlist }) {
     const [streamingLinks, setStreamingLinks] = useState([]);
 
     useEffect(() => {
@@ -59,16 +60,58 @@ function AnimeDetails({ anime, onBack, t, lang, isVF = false }) {
 
                 {/* Right Column: Content */}
                 <div className="flex-col gap-lg">
-                    <div>
-                        <h1 style={{ fontSize: '2.5rem', marginBottom: 'var(--spacing-xs)' }}>
-                            {lang === 'fr'
-                                ? (anime.titles?.find(t => t.type === 'French')?.title || anime.title_english || anime.title)
-                                : (anime.title_english || anime.title)
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h1 style={{ fontSize: '2.5rem', marginBottom: 'var(--spacing-xs)' }}>
+                                {lang === 'fr'
+                                    ? (anime.titles?.find(t => t.type === 'French')?.title || anime.title_english || anime.title)
+                                    : (anime.title_english || anime.title)
+                                }
+                            </h1>
+                            <h2 style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>
+                                {anime.title}
+                            </h2>
+                        </div>
+                        <button
+                            onClick={() => onToggleWatchlist(anime)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 16px',
+                                borderRadius: '99px',
+                                fontWeight: '600',
+                                fontSize: '0.85rem',
+                                transition: 'all 0.3s ease',
+                                background: isFavorite ? '#ef4444' : 'transparent',
+                                color: isFavorite ? '#fff' : 'var(--text-secondary)',
+                                border: isFavorite ? '1px solid #ef4444' : '1px solid var(--border-color)',
+                                boxShadow: isFavorite ? '0 2px 10px rgba(239, 68, 68, 0.3)' : 'none',
+                                cursor: 'pointer',
+                                height: 'fit-content',
+                                marginTop: '8px'
+                            }}
+                            onMouseEnter={(e) => {
+                                if (!isFavorite) {
+                                    e.currentTarget.style.background = 'var(--bg-secondary)';
+                                    e.currentTarget.style.color = 'var(--text-primary)';
+                                }
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                                if (!isFavorite) {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = 'var(--text-secondary)';
+                                }
+                                e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                        >
+                            <Heart size={16} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "text-white" : ""} />
+                            {isFavorite
+                                ? (lang === 'fr' ? 'Favori' : 'Favorited')
+                                : (lang === 'fr' ? 'Ajouter aux favoris' : 'Add to Favorites')
                             }
-                        </h1>
-                        <h2 style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>
-                            {anime.title}
-                        </h2>
+                        </button>
                     </div>
 
                     <div className="flex gap-sm flex-wrap">

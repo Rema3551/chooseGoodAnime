@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Star, Heart, Loader2, Grid, LayoutGrid, Columns, Palette, Moon, Sun, ZoomIn, ZoomOut } from 'lucide-react';
 
-import { getTopAnime, searchAnime, getAnimeGenres, searchAniList, getAnimeRecommendations } from './services/api';
+import { getTopAnime, searchAnime, getAnimeGenres, searchAniList, getAnimeRecommendations, getAniListHighResImage } from './services/api';
 import AnimeDetails from './components/AnimeDetails';
+import AnimeCard3D from './components/AnimeCard3D';
+import HeroBanner from './components/HeroBanner';
 import SurpriseReveal from './components/SurpriseReveal';
 import MultiSelect from './components/MultiSelect';
 import { VF_GOLDEN_LIST, VF_PRODUCERS } from './data/golden_list_vf';
@@ -106,8 +108,43 @@ function App() {
 
     // View States
     const [selectedAnime, setSelectedAnime] = useState(null);
+    const [featuredAnime, setFeaturedAnime] = useState(null);
+    const [featuredBannerUrl, setFeaturedBannerUrl] = useState(null);
     const [surpriseMode, setSurpriseMode] = useState(false);
     const [searchMode, setSearchMode] = useState('title'); // 'title', 'vibe', 'similar'
+
+    // Watchlist State
+    const [watchlist, setWatchlist] = useState(() => {
+        try {
+            const saved = localStorage.getItem('anime_watchlist');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Failed to parse watchlist", e);
+            return [];
+        }
+    });
+
+    const [showWatchlistOnly, setShowWatchlistOnly] = useState(false);
+
+    // Persist Watchlist
+    useEffect(() => {
+        localStorage.setItem('anime_watchlist', JSON.stringify(watchlist));
+    }, [watchlist]);
+
+    const toggleWatchlist = (anime) => {
+        setWatchlist(prev => {
+            const exists = prev.some(a => a.mal_id === anime.mal_id);
+            if (exists) {
+                return prev.filter(a => a.mal_id !== anime.mal_id);
+            } else {
+                return [...prev, anime];
+            }
+        });
+    };
+
+    const isInWatchlist = (mal_id) => {
+        return watchlist.some(a => a.mal_id === mal_id);
+    };
 
     const MAIN_GENRES = [
         "Action", "Adventure", "Comedy", "Drama", "Fantasy",
@@ -328,6 +365,15 @@ function App() {
 
             if (isNewSearch) {
                 setAnimes(newAnimes);
+
+                // Set Featured Anime only when on Home (Top Anime) and no active search/filters
+                if (!hasActiveFilters() && newAnimes.length > 0) {
+                    // Randomize from the first batch
+                    const randomFeatured = newAnimes[Math.floor(Math.random() * newAnimes.length)];
+                    setFeaturedAnime(randomFeatured);
+                } else if (searchQuery || hasActiveFilters()) {
+                    setFeaturedAnime(null); // Clear featured when searching
+                }
             } else {
                 // Append unique items (deduplicate by MAL ID just in case)
                 setAnimes(prev => {
@@ -347,6 +393,23 @@ function App() {
             setIsFetchingMore(false);
         }
     };
+
+    // Fallback: Ensure Featured Anime is set if we have results on Home
+    useEffect(() => {
+        const isHome = !searchQuery.trim() &&
+            selectedGenres.length === 0 &&
+            selectedPlatforms.length === 0 &&
+            !selectedYear &&
+            !selectedStatus &&
+            !selectedType &&
+            (!minScore || minScore === '0') &&
+            !vfOnly;
+
+        if (!loading && animes && animes.length > 0 && !featuredAnime && isHome && !selectedAnime) {
+            const randomFeatured = animes[Math.floor(Math.random() * animes.length)];
+            setFeaturedAnime(randomFeatured);
+        }
+    }, [loading, animes, featuredAnime, searchQuery, selectedGenres, selectedPlatforms, selectedYear, selectedStatus, selectedType, minScore, vfOnly, selectedAnime]);
 
     // Auto-apply filters with debounce
     useEffect(() => {
@@ -694,10 +757,14 @@ function App() {
                                 (Array.isArray(VF_GOLDEN_LIST) && VF_GOLDEN_LIST.includes(selectedAnime.mal_id)) ||
                                 (selectedAnime.producers && Array.isArray(selectedAnime.producers) && selectedAnime.producers.some(p => p && p.mal_id && Array.isArray(VF_PRODUCERS) && VF_PRODUCERS.includes(p.mal_id)))
                             }
+                            isFavorite={isInWatchlist(selectedAnime.mal_id)}
+                            onToggleWatchlist={toggleWatchlist}
                         />
                     </div>
                 ) : (
                     <>
+
+
                         {/* Sidebar Filters */}
                         <aside className="filters sidebar-panel">
                             <div style={{
@@ -828,6 +895,16 @@ function App() {
 
                         {/* Results Grid */}
                         <section className="results">
+                            {/* Hero Banner (In-Content) */}
+                            {!loading && featuredAnime && !selectedAnime && (
+                                <HeroBanner
+                                    anime={featuredAnime}
+                                    bannerUrl={featuredBannerUrl}
+                                    onClick={() => setSelectedAnime(featuredAnime)}
+                                    lang={lang}
+                                />
+                            )}
+
                             <div className="flex justify-between items-center" style={{ marginBottom: 'var(--spacing-md)' }}>
                                 <h2>
                                     {searchQuery ?
@@ -838,6 +915,26 @@ function App() {
                                 </h2>
 
                                 <div className="flex items-center gap-sm">
+                                    {/* Watchlist Toggle */}
+                                    <button
+                                        onClick={() => setShowWatchlistOnly(!showWatchlistOnly)}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${showWatchlistOnly ? 'bg-red-500/20 text-red-400' : 'hover:bg-white/5 text-slate-400'}`}
+                                        style={{
+                                            marginRight: '12px',
+                                            background: showWatchlistOnly ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+                                            color: showWatchlistOnly ? '#f87171' : 'var(--text-secondary)',
+                                            border: showWatchlistOnly ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid transparent',
+                                            borderRadius: '8px',
+                                            padding: '6px 12px'
+                                        }}
+                                        title={showWatchlistOnly ? "Voir tout" : "Voir mes favoris"}
+                                    >
+                                        <Heart size={20} className={showWatchlistOnly ? "fill-current" : ""} />
+                                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                            {showWatchlistOnly ? (lang === 'fr' ? 'Favoris' : 'Favorites') : (lang === 'fr' ? 'Favoris' : 'Favorites')}
+                                        </span>
+                                    </button>
+
                                     {loading && <Loader2 className="animate-spin" size={24} style={{ marginRight: '8px' }} />}
 
                                     {/* Grid Controls: Zoom In/Out */}
@@ -890,60 +987,19 @@ function App() {
                                         gridTemplateColumns: `repeat(${gridColumns}, 1fr)`, // Dynamic columns
                                         gap: 'var(--spacing-md)'
                                     }}>
-                                        {animes.map(anime => (
-                                            <div key={anime.mal_id}
+                                        {(showWatchlistOnly ? watchlist : animes).map((anime, index) => (
+                                            <AnimeCard3D
+                                                key={`${anime.mal_id}-${index}`}
+                                                anime={anime}
                                                 onClick={() => setSelectedAnime(anime)}
-                                                className="anime-card" style={{
-                                                    background: 'var(--bg-card)',
-                                                    borderRadius: 'var(--radius-md)',
-                                                    overflow: 'hidden',
-                                                    transition: 'transform 0.2s',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    flexDirection: 'column'
-                                                }}>
-                                                <div style={{ aspectRatio: '2/3', background: '#333', position: 'relative' }}>
-                                                    <img
-                                                        src={anime.images.jpg.large_image_url || anime.images.jpg.image_url}
-                                                        alt={anime.title}
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                        loading="lazy"
-                                                    />
-                                                    <div style={{
-                                                        position: 'absolute',
-                                                        top: '8px',
-                                                        right: '8px',
-                                                        background: 'rgba(0,0,0,0.8)',
-                                                        padding: '4px 8px',
-                                                        borderRadius: '4px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '4px',
-                                                        fontSize: '0.8rem',
-                                                        fontWeight: 'bold',
-                                                        color: '#fff'
-                                                    }}>
-                                                        <Star size={12} fill="#ffc107" color="#ffc107" />
-                                                        {anime.score || 'N/A'}
-                                                    </div>
-                                                </div>
-                                                <div style={{ padding: 'var(--spacing-sm)', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                                                    <h3 style={{ fontSize: gridColumns >= 6 ? '0.8rem' : '1rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '4px' }} title={anime.title_english || anime.title}>
-                                                        {lang === 'fr'
-                                                            ? (anime.titles?.find(t => t.type === 'French')?.title || anime.title)
-                                                            : (anime.title_english || anime.title)
-                                                        }
-                                                    </h3>
-                                                    <div className="tags flex gap-sm" style={{ marginTop: 'auto', flexWrap: 'wrap' }}>
-                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                            {anime.genres.slice(0, 2).map(g => getLocalizedGenre(g.name, lang)).join(', ')}
-                                                        </span>
-                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>• {anime.year || 'Unknown'}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                gridColumns={gridColumns}
+                                                lang={lang}
+                                                isFavorite={isInWatchlist(anime.mal_id)}
+                                                onToggleWatchlist={toggleWatchlist}
+                                            />
                                         ))}
                                     </div>
+
 
                                     {/* Infinite Scroll Sentinel */}
                                     <div id="scroll-sentinel" style={{ height: '40px', marginTop: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -956,10 +1012,11 @@ function App() {
                             )}
                         </section>
                     </>
-                )}
+                )
+                }
 
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }
 

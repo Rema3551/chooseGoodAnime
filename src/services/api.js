@@ -229,6 +229,49 @@ export const getAnimeRecommendations = async (id) => {
     }
 };
 
+/**
+ * Fetches high-res banner image from AniList by title.
+ */
+export const getAniListHighResImage = async (title) => {
+    try {
+        const query = `
+        query ($search: String) {
+          Media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
+            id
+            bannerImage
+            coverImage {
+              extraLarge
+              large
+            }
+          }
+        }
+        `;
+
+        const response = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                query,
+                variables: { search: title }
+            })
+        });
+
+        const data = await response.json();
+        const media = data.data?.Media;
+
+        if (media && media.bannerImage) {
+            return media.bannerImage;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching AniList image:', error);
+        return null;
+    }
+};
+
 export const getAnimeGenres = async () => {
     try {
         const response = await fetch(`${BASE_URL}/genres/anime`);
