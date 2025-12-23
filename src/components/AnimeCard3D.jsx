@@ -70,7 +70,12 @@ const AnimeCard3D = ({ anime, onClick, gridColumns, lang = 'fr', isFavorite, onT
 
             <div style={{ aspectRatio: '2/3', background: '#333', position: 'relative', zIndex: 1 }}>
                 <img
-                    src={anime.images.jpg.large_image_url || anime.images.jpg.image_url}
+                    src={
+                        anime.images?.webp?.large_image_url ||
+                        anime.images?.jpg?.large_image_url ||
+                        anime.images?.webp?.image_url ||
+                        anime.images?.jpg?.image_url
+                    }
                     alt={anime.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     loading="lazy"

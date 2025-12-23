@@ -13,42 +13,75 @@ const HeroBanner = ({ anime, onClick, lang = 'fr' }) => {
         ? "Découvrez cette œuvre incontournable qui captive les fans du monde entier." // Placeholder as we don't have FR synopsis in Jikan lite response often
         : anime.synopsis;
 
-    // Use trailer thumbnail (landscape) if available for better cropping in banner format
-    const bgImage = anime.trailer?.images?.maximum_image_url ||
+    // Determine best available fallback immediately (Trailer > Large Cover)
+    const fallbackImage = anime.trailer?.images?.maximum_image_url ||
         anime.trailer?.images?.large_image_url ||
+        anime.images?.webp?.large_image_url ||
         anime.images?.jpg?.large_image_url ||
         anime.images?.jpg?.image_url;
+
+    // State for the final banner to display
+    // Start as null to show solid color (loading state) instead of low-quality image
+    const [bannerImage, setBannerImage] = React.useState(null);
+
+    React.useEffect(() => {
+        let isMounted = true;
+        setBannerImage(null); // Reset to loading state on anime change
+
+        const fetchBestBanner = async () => {
+            if (anime?.title) {
+                // Try to find a High-Res Banner from AniList
+                const highRes = await import('../services/api').then(mod => mod.getAniListHighResImage(anime.title));
+
+                if (isMounted) {
+                    if (highRes) {
+                        setBannerImage(highRes);
+                    } else {
+                        // If no high-res exists, fall back to the best available standard image
+                        setBannerImage(fallbackImage);
+                    }
+                }
+            } else if (isMounted) {
+                setBannerImage(fallbackImage);
+            }
+        };
+
+        fetchBestBanner();
+        return () => { isMounted = false; };
+    }, [anime, fallbackImage]);
 
     return (
         <div style={{
             position: 'relative',
-            width: '98%', // Slightly reduced width
-            maxWidth: '1100px', // Prevent it from getting too huge on large screens
+            width: '98%',
+            maxWidth: '1100px',
             height: '300px',
             minHeight: '250px',
             borderRadius: 'var(--radius-lg)',
             overflow: 'hidden',
-            margin: '0 auto var(--spacing-md)', // Centered with bottom margin
+            margin: '0 auto var(--spacing-md)',
             boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-            background: '#1e293b', // Fallback color if image fails
+            background: '#1e293b',
             display: 'flex',
             alignItems: 'flex-end'
         }}>
-            {/* Background Image */}
+            {/* Main Banner Layer (Fade In) */}
             <div style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
                 height: '100%',
-                backgroundImage: `url(${bgImage})`,
+                backgroundImage: bannerImage ? `url(${bannerImage})` : 'none',
                 backgroundSize: 'cover',
-                backgroundPosition: 'center center', // Center is better for landscape trailer images
-                filter: 'brightness(0.7)', // Slightly darker for better text contrast
-                zIndex: 1
+                backgroundPosition: 'center center',
+                filter: 'brightness(0.7)',
+                zIndex: 1,
+                opacity: bannerImage ? 1 : 0,
+                transition: 'opacity 0.7s ease-in-out'
             }} />
 
-            {/* Gradient Overlay for Text Readability */}
+            {/* Gradient Overlay */}
             <div style={{
                 position: 'absolute',
                 top: 0,
@@ -56,7 +89,7 @@ const HeroBanner = ({ anime, onClick, lang = 'fr' }) => {
                 width: '100%',
                 height: '100%',
                 background: 'linear-gradient(to top, var(--bg-primary) 10%, transparent 80%)',
-                zIndex: 2
+                zIndex: 3
             }} />
 
             {/* Featured Badge - Top Right */}

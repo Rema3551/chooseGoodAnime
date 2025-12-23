@@ -93,6 +93,99 @@ import { KEYWORD_TO_TAG } from './keyword_map.js';
 // ... (existing exports)
 
 /**
+ * Searches AniList with a specific list of tags.
+ */
+export const searchAnimeByTags = async (tags, page = 1, excludeIds = []) => {
+    try {
+        if (!tags || tags.length === 0) {
+            return { data: [], pagination: { has_next_page: false } };
+        }
+
+        console.log(`Searching AniList with tags: ${tags.join(', ')} (Page ${page})`);
+
+        const query = `
+        query ($tags: [String], $page: Int, $excludeIds: [Int]) {
+          Page(page: $page, perPage: 20) {
+            pageInfo {
+              hasNextPage
+            }
+            media(tag_in: $tags, id_not_in: $excludeIds, type: ANIME, sort: POPULARITY_DESC) {
+              id
+              idMal
+              title {
+                romaji
+                english
+              }
+              coverImage {
+                extraLarge
+                large
+              }
+              averageScore
+              genres
+              seasonYear
+              description
+              tags {
+                  name
+                  rank
+              }
+            }
+          }
+        }
+        `;
+
+        const response = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                query,
+                variables: {
+                    tags: tags,
+                    page: page,
+                    excludeIds: excludeIds
+                }
+            })
+        });
+
+        const data = await response.json();
+        const aniListResults = data.data?.Page?.media || [];
+        const hasNextPage = data.data?.Page?.pageInfo?.hasNextPage || false;
+
+        const mappedResults = aniListResults.map(item => ({
+            mal_id: item.idMal || item.id,
+            title: item.title.english || item.title.romaji,
+            images: {
+                jpg: {
+                    large_image_url: item.coverImage.extraLarge || item.coverImage.large,
+                    image_url: item.coverImage.large
+                },
+                webp: {
+                    large_image_url: item.coverImage.extraLarge || item.coverImage.large,
+                    image_url: item.coverImage.large
+                }
+            },
+            score: item.averageScore ? (item.averageScore / 10).toFixed(2) : 'N/A',
+            genres: item.genres.map(g => ({ name: g })),
+            year: item.seasonYear,
+            synopsis: item.description,
+            producers: [],
+            tags: item.tags || [] // Include tags for mixer explanation
+        }));
+
+        return {
+            data: mappedResults,
+            pagination: { has_next_page: hasNextPage }
+        };
+
+    } catch (error) {
+        console.error('Error searching AniList by tags:', error);
+        return { data: [], pagination: { has_next_page: false } };
+    }
+};
+
+/**
  * Parses a descriptive query, extracts keywords, and searches AniList by Tags.
  * Maps results to Jikan-like format.
  */
@@ -119,84 +212,7 @@ export const searchAniList = async (descriptionQuery, page = 1) => {
             return { data: [], pagination: { has_next_page: false } };
         }
 
-        console.log(`Searching AniList with tags: ${uniqueTags.join(', ')} (Page ${page})`);
-
-        // 2. Build GraphQL Query
-        // We filter by `tag_in` (must have at least one? No, `tag_in` is OR by default in some contexts, but let's check).
-        // Actually `tag_in` matches *any* of the tags. We want *all* ideally?
-        // AniList `tag_in` is OR. `tag_and` doesn't exist directly on `media` arguments?
-        // Wait, `genre_in` is OR.
-        // If we want specific combinations, we might need to filter client side or use advanced query.
-        // BUT, for "Vibe", getting ANY match is often better than zero results.
-        // Let's use `tag_in` effectively.
-
-        const query = `
-        query ($tags: [String], $page: Int) {
-          Page(page: $page, perPage: 20) {
-            pageInfo {
-              hasNextPage
-            }
-            media(tag_in: $tags, type: ANIME, sort: POPULARITY_DESC) {
-              id
-              idMal
-              title {
-                romaji
-                english
-              }
-              coverImage {
-                large
-              }
-              averageScore
-              genres
-              seasonYear
-              description
-            }
-          }
-        }
-        `;
-
-        const response = await fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                query,
-                variables: { tags: uniqueTags, page: page }
-            })
-        });
-
-        const data = await response.json();
-        const aniListResults = data.data?.Page?.media || [];
-        const hasNextPage = data.data?.Page?.pageInfo?.hasNextPage || false;
-
-        // 3. Map to Jikan Format
-        const mappedResults = aniListResults.map(item => ({
-            mal_id: item.idMal || item.id, // Prefer MAL ID if available
-            title: item.title.english || item.title.romaji,
-            images: {
-                jpg: {
-                    large_image_url: item.coverImage.large,
-                    image_url: item.coverImage.large
-                }
-            },
-            score: item.averageScore ? (item.averageScore / 10).toFixed(2) : 'N/A',
-            genres: item.genres.map(g => ({ name: g })),
-            year: item.seasonYear,
-            synopsis: item.description, // AniList description is HTML sometimes
-            producers: [] // AniList doesn't give easy producer IDs mapping without extra queries, leave empty
-        }));
-
-        // Client-side cleanup: Filter out items that don't have ALL tags if we want strictness?
-        // Or confirm matches.
-        // For now, let's keep it loose (OR logic) because strict (AND) often returns 0 results on AniList if not exact.
-        // IMPROVEMENT: Sort by how many tags match?
-
-        return {
-            data: mappedResults,
-            pagination: { has_next_page: hasNextPage }
-        };
+        return await searchAnimeByTags(uniqueTags, page);
 
     } catch (error) {
         console.error('Error searching AniList:', error);

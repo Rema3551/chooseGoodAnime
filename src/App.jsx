@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Star, Heart, Loader2, Grid, LayoutGrid, Columns, Palette, Moon, Sun, ZoomIn, ZoomOut } from 'lucide-react';
+import { Search, FlaskConical, Filter, Star, Heart, Loader2, Grid, LayoutGrid, Columns, Palette, Moon, Sun, ZoomIn, ZoomOut } from 'lucide-react';
 
 import { getTopAnime, searchAnime, getAnimeGenres, searchAniList, getAnimeRecommendations, getAniListHighResImage } from './services/api';
 import AnimeDetails from './components/AnimeDetails';
@@ -8,6 +8,7 @@ import HeroBanner from './components/HeroBanner';
 import SurpriseReveal from './components/SurpriseReveal';
 import MultiSelect from './components/MultiSelect';
 import TierListMaker from './components/TierListMaker';
+import AnimeMixer from './components/AnimeMixer';
 import { VF_GOLDEN_LIST, VF_PRODUCERS } from './data/golden_list_vf';
 import { getLocalizedGenre } from './data/genre_translations';
 
@@ -82,7 +83,6 @@ const translations = {
         format: "Format",
         allFormats: "All",
         formatTV: "TV Series",
-        formatTV: "TV Series",
         formatMovie: "Movie",
         vibeSearchPlaceholder: "Search by vibe (e.g. overpowered character dungeon...)"
     }
@@ -113,6 +113,7 @@ function App() {
     const [featuredBannerUrl, setFeaturedBannerUrl] = useState(null);
     const [surpriseMode, setSurpriseMode] = useState(false);
     const [tierListMode, setTierListMode] = useState(false); // New Tier List Mode
+    const [mixerMode, setMixerMode] = useState(false); // Anime Mixer Mode
     const [searchMode, setSearchMode] = useState('title'); // 'title', 'vibe', 'similar'
 
     // Watchlist State
@@ -740,9 +741,25 @@ function App() {
                             fontWeight: 'bold',
                             cursor: 'pointer'
                         }}
-                            onClick={() => setTierListMode(true)}
+                            onClick={() => { setTierListMode(true); setMixerMode(false); }}
                         >
                             {lang === 'fr' ? '🏆 Tier List' : '🏆 Tier List Maker'}
+                        </button>
+
+                        <button style={{
+                            background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            marginLeft: '8px',
+                            boxShadow: '0 4px 15px rgba(236, 72, 153, 0.4)'
+                        }}
+                            onClick={() => { setMixerMode(true); setTierListMode(false); setSelectedAnime(null); }}
+                        >
+                            {lang === 'fr' ? '🧪 Mixer' : '🧪 Mixer'}
                         </button>
                     </div>
                 </div>
@@ -754,6 +771,10 @@ function App() {
                 {tierListMode ? (
                     <div style={{ gridColumn: '1 / -1', minHeight: '80vh' }}>
                         <TierListMaker t={t} lang={lang} />
+                    </div>
+                ) : mixerMode ? (
+                    <div style={{ gridColumn: '1 / -1', minHeight: '80vh' }}>
+                        <AnimeMixer t={t} lang={lang} onBack={() => setMixerMode(false)} />
                     </div>
                 ) : selectedAnime ? (
                     <div style={{ gridColumn: '1 / -1', minHeight: '80vh' }}>
