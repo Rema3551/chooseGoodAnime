@@ -250,7 +250,7 @@ function App() {
         return () => {
             if (target) observer.unobserve(target);
         };
-    }, [animes, loading, isFetchingMore, hasNextPage]); // Re-attach when list changes
+    }, [animes, loading, isFetchingMore, hasNextPage, tierListMode, selectedAnime]); // Re-attach when list changes or view changes
 
     const handleLoadMore = () => {
         setIsFetchingMore(true);
