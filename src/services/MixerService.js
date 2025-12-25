@@ -45,7 +45,7 @@ const getAnimeTags = async (title) => {
 
 export const mixAnimes = async (animeA, animeB) => {
     try {
-        console.log(`Mixin' it up: ${animeA.title} + ${animeB.title}`);
+
 
         // 1. Get Rich Tags from AniList for both sources
         // We run in parallel for speed
@@ -108,7 +108,7 @@ export const mixAnimes = async (animeA, animeB) => {
 
         // Attempt 2: Fallback to just Genres if detailed tags failed (Broad Search)
         if (!results.data || results.data.length === 0) {
-            console.log("Attempt 1 failed. Trying fallback with genres only.");
+
             const broadGenres = [...new Set([...genresA, ...genresB])].slice(0, 4);
             if (broadGenres.length > 0) {
                 results = await searchAnimeByTags(broadGenres, 1, excludeIds);
@@ -118,7 +118,7 @@ export const mixAnimes = async (animeA, animeB) => {
 
         // Attempt 3: "Opposites Attract" - Just take the top tag of A and top tag of B
         if (!results.data || results.data.length === 0) {
-            console.log("Attempt 2 failed. Trying simple top tag mix.");
+
             const lastResortTags = [
                 tagsA[0] || genresA[0],
                 tagsB[0] || genresB[0]

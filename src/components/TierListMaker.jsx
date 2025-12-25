@@ -284,7 +284,7 @@ export default function TierListMaker({ t, lang }) {
 
             if (bankCount < 5 && !isLoadingMore && !initializing) {
                 setIsLoadingMore(true);
-                console.log(`Bank low (${bankCount}), fetching page ${currentTopAnimePage}...`);
+
 
                 try {
                     const topAnimeData = await getTopAnime(currentTopAnimePage, 'bypopularity');
@@ -375,7 +375,7 @@ export default function TierListMaker({ t, lang }) {
         const activeId = active.id;
         const overId = over.id;
 
-        console.log('Drag End:', activeId, 'over', overId);
+
 
         // Determine destination tier
         // If "over" is a Tier ID (S, A, B...) or 'bank', move to that tier

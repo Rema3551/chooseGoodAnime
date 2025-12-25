@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, FlaskConical, Filter, Star, Heart, Loader2, Grid, LayoutGrid, Columns, Palette, Moon, Sun, ZoomIn, ZoomOut } from 'lucide-react';
+import { Search, FlaskConical, Filter, Star, Heart, Loader2, Grid, LayoutGrid, Columns, Palette, Moon, Sun, ZoomIn, ZoomOut, Tag, Sparkles } from 'lucide-react';
 
 import { getTopAnime, searchAnime, getAnimeGenres, searchAniList, getAnimeRecommendations, getAniListHighResImage } from './services/api';
 import AnimeDetails from './components/AnimeDetails';
@@ -48,7 +48,8 @@ const translations = {
         allFormats: "Tous",
         formatTV: "Série TV",
         formatMovie: "Film",
-        vibeSearchPlaceholder: "Recherche par ambiance (ex: personnage surpuissant donjon...)"
+        vibeSearchPlaceholder: "Recherche par ambiance (ex: personnage surpuissant donjon...)",
+        noResults: "Aucun anime trouvé pour cette recherche 😔"
     },
     en: {
         searchPlaceholder: "Search for an anime...",
@@ -103,6 +104,7 @@ function App() {
     const [selectedPlatforms, setSelectedPlatforms] = useState([]); // Array of platform IDs (string)
     const [selectedYear, setSelectedYear] = useState('');
     const [selectedType, setSelectedType] = useState(''); // 'tv', 'movie'
+    const [detectedTags, setDetectedTags] = useState({ tags: [], genres: [] }); // For Vibe detection feedback
     const [selectedStatus, setSelectedStatus] = useState('');
     const [minScore, setMinScore] = useState('');
     const [vfOnly, setVfOnly] = useState(false);
@@ -266,12 +268,9 @@ function App() {
             setLoading(true);
             setPage(1);
             setHasNextPage(true);
-            // Don't clear animes immediately if we want smooth transition? 
-            // Better to clear to avoid confusion.
-            // setAnimes([]); 
+            setDetectedTags({ tags: [], genres: [] });
         }
 
-        // Reset selection to show results (only on new search)
         if (isNewSearch) setSelectedAnime(null);
 
         try {
@@ -280,10 +279,18 @@ function App() {
 
             if (searchQuery.trim() !== '') {
                 if (searchMode === 'vibe') {
-                    // MODE: VIBE SEARCH
+                    // MODE: VIBE SEARCH (AniList Tags)
+                    // Pass the raw query description to our smarter parser
                     const results = await searchAniList(searchQuery, nextPage);
                     newAnimes = results.data || [];
                     hasNext = results.pagination?.has_next_page || false;
+
+                    if (nextPage === 1 && results.meta) {
+                        setDetectedTags({
+                            tags: results.meta.recognizedTags || [],
+                            genres: results.meta.recognizedGenres || []
+                        });
+                    }
                 } else if (searchMode === 'similar') {
                     // MODE: SIMILAR SEARCH
                     // 1. Find the anime ID first (Standard Search)
@@ -291,11 +298,41 @@ function App() {
                     const candidates = searchRes.data || [];
                     if (candidates.length > 0) {
                         const targetId = candidates[0].mal_id;
-                        console.log(`Finding similar to: ${candidates[0].title} (${targetId})`);
+
                         // 2. Get Recommendations
                         const recs = await getAnimeRecommendations(targetId);
-                        newAnimes = recs;
-                        hasNext = false; // Recommendations endpoint is not paginated usually
+
+                        if (recs && recs.length > 0) {
+                            newAnimes = recs;
+                            hasNext = false;
+                        } else {
+                            // Fallback: Use Vibe Search with genres
+                            console.log("No direct recommendations, falling back to Vibe Search...");
+
+                            // Aggregate all metadata: Genres, Themes, Demographics
+                            const metadata = [
+                                ...(candidates[0].genres || []),
+                                ...(candidates[0].themes || []),
+                                ...(candidates[0].demographics || [])
+                            ];
+
+                            const searchMeta = metadata.map(g => g.name).join(' ');
+
+                            if (searchMeta) {
+                                // Add a "mixReason" or similar property to indicate this is a fallback?
+                                // For now, just fetch.
+                                const vibeRes = await searchAniList(searchMeta, nextPage);
+
+                                // Filter out the target anime itself
+                                newAnimes = (vibeRes.data || []).filter(a => a.mal_id !== targetId);
+                                hasNext = vibeRes.data?.pagination?.has_next_page || false;
+
+                                // Optional: Notify user (could be done via a toast or UI state, 
+                                // but for now keeping it simple as requested)
+                            } else {
+                                newAnimes = [];
+                            }
+                        }
                     } else {
                         newAnimes = [];
                     }
@@ -765,6 +802,23 @@ function App() {
                 </div>
             </header>
 
+            {/* Detected Tags Feedback */}
+            {(detectedTags.genres.length > 0 || detectedTags.tags.length > 0) && (
+                <div className="flex flex-wrap justify-center gap-2 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <span className="text-sm text-gray-400 self-center mr-2">Ambiance détectée :</span>
+                    {detectedTags.genres.map(g => (
+                        <span key={`g-${g}`} className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-medium border border-purple-500/30 flex items-center gap-1">
+                            <Sparkles size={10} /> {g}
+                        </span>
+                    ))}
+                    {detectedTags.tags.map(t => (
+                        <span key={`t-${t}`} className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-medium border border-blue-500/30 flex items-center gap-1">
+                            <Tag size={10} /> {t}
+                        </span>
+                    ))}
+                </div>
+            )}
+
             {/* Main Content */}
             <main className="container layout-grid" style={{ paddingTop: '2rem' }}>
 
@@ -1010,6 +1064,19 @@ function App() {
 
                             {loading && !isFetchingMore && animes.length === 0 ? (
                                 <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>{t.loading}</div>
+                            ) : animes.length === 0 ? (
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '60px 20px',
+                                    color: 'var(--text-secondary)',
+                                    textAlign: 'center'
+                                }}>
+                                    <h3 style={{ fontSize: '1.2rem', marginBottom: '10px' }}>{t.noResults}</h3>
+                                    <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>Essayez d'autres mots-clés ou vérifiez l'orthographe.</p>
+                                </div>
                             ) : (
                                 <>
                                     <div style={{

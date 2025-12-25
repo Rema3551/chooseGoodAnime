@@ -92,24 +92,31 @@ import { KEYWORD_TO_TAG } from './keyword_map.js';
 
 // ... (existing exports)
 
+// Known AniList Genres (must be exact casing)
+const ANILIST_GENRES = [
+    "Action", "Adventure", "Comedy", "Drama", "Ecchi", "Fantasy", "Horror",
+    "Mahou Shoujo", "Mecha", "Music", "Mystery", "Psychological", "Romance",
+    "Sci-Fi", "Slice of Life", "Sports", "Supernatural", "Thriller"
+];
+
 /**
- * Searches AniList with a specific list of tags.
+ * Searches AniList with a specific list of tags AND genres.
  */
-export const searchAnimeByTags = async (tags, page = 1, excludeIds = []) => {
+export const searchAnimeByTags = async (tags, genres = [], page = 1, excludeIds = []) => {
     try {
-        if (!tags || tags.length === 0) {
+        if ((!tags || tags.length === 0) && (!genres || genres.length === 0)) {
             return { data: [], pagination: { has_next_page: false } };
         }
 
-        console.log(`Searching AniList with tags: ${tags.join(', ')} (Page ${page})`);
+
 
         const query = `
-        query ($tags: [String], $page: Int, $excludeIds: [Int]) {
+        query ($tags: [String], $genres: [String], $page: Int, $excludeIds: [Int]) {
           Page(page: $page, perPage: 20) {
             pageInfo {
               hasNextPage
             }
-            media(tag_in: $tags, id_not_in: $excludeIds, type: ANIME, sort: POPULARITY_DESC) {
+            media(tag_in: $tags, genre_in: $genres, id_not_in: $excludeIds, type: ANIME, sort: POPULARITY_DESC) {
               id
               idMal
               title {
@@ -142,7 +149,8 @@ export const searchAnimeByTags = async (tags, page = 1, excludeIds = []) => {
             body: JSON.stringify({
                 query,
                 variables: {
-                    tags: tags,
+                    tags: tags.length > 0 ? tags : undefined,
+                    genres: genres && genres.length > 0 ? genres : undefined, // Pass genres if present
                     page: page,
                     excludeIds: excludeIds
                 }
@@ -192,27 +200,62 @@ export const searchAnimeByTags = async (tags, page = 1, excludeIds = []) => {
 export const searchAniList = async (descriptionQuery, page = 1) => {
     try {
         // 1. Extract Keywords & Map to Tags
-        const words = descriptionQuery.toLowerCase().split(/\s+/);
-        const tags = [];
+
+        // Pre-processing for phrases (convert to single tokens)
+        let processedQuery = descriptionQuery.toLowerCase();
+        processedQuery = processedQuery.replace(/beau gosse/g, "beaugosse");
+        processedQuery = processedQuery.replace(/jeux? de sociét[ée]/g, "jeudesociete"); // Handle singular/plural and accent
+        processedQuery = processedQuery.replace(/feel good/g, "iyashikei");
+        processedQuery = processedQuery.replace(/school life/g, "school");
+
+        // Normalize accents: "Drôle" -> "drole", "Épique" -> "epique"
+        const normalizedQuery = processedQuery
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        // Split by spaces and common punctuation
+        const words = normalizedQuery.split(/[\s,.;:!?]+/);
+        const foundTerms = [];
 
         words.forEach(w => {
-            // Remove punctuation
-            const cleanWord = w.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
+            // Remove remaining special chars just in case
+            const cleanWord = w.replace(/[^a-z0-9-]/g, "");
+
+            // Check direct match
             if (KEYWORD_TO_TAG[cleanWord]) {
-                tags.push(KEYWORD_TO_TAG[cleanWord]);
+                foundTerms.push(KEYWORD_TO_TAG[cleanWord]);
+            }
+            // Handle Plurals (French: usually ends in 's', rarely 'x')
+            else if (cleanWord.endsWith('s') && KEYWORD_TO_TAG[cleanWord.slice(0, -1)]) {
+                foundTerms.push(KEYWORD_TO_TAG[cleanWord.slice(0, -1)]);
+            }
+            else if (cleanWord.endsWith('x') && KEYWORD_TO_TAG[cleanWord.slice(0, -1)]) {
+                foundTerms.push(KEYWORD_TO_TAG[cleanWord.slice(0, -1)]);
             }
         });
 
         // Deduplicate
-        const uniqueTags = [...new Set(tags)];
+        const uniqueTerms = [...new Set(foundTerms)];
 
-        if (uniqueTags.length === 0) {
+        if (uniqueTerms.length === 0) {
             // No tags found, return empty or fallback?
             // Let's return empty and let UI handle "No vibe found"
             return { data: [], pagination: { has_next_page: false } };
         }
 
-        return await searchAnimeByTags(uniqueTags, page);
+        // Split into Genres and Tags
+        const genres = uniqueTerms.filter(t => ANILIST_GENRES.includes(t));
+        const tags = uniqueTerms.filter(t => !ANILIST_GENRES.includes(t));
+
+        const searchResult = await searchAnimeByTags(tags, genres, page);
+
+        // Attach the used filters to the response so UI can display them
+        return {
+            ...searchResult,
+            meta: {
+                recognizedTags: tags,
+                recognizedGenres: genres
+            }
+        };
 
     } catch (error) {
         console.error('Error searching AniList:', error);
