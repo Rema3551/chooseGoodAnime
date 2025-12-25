@@ -170,7 +170,34 @@ function App() {
     const [page, setPage] = useState(1);
     const [hasNextPage, setHasNextPage] = useState(true);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
-    const [gridColumns, setGridColumns] = useState(5); // Default 5
+
+    // Responsive Grid Columns
+    const getInitialGridColumns = () => {
+        if (typeof window !== 'undefined') {
+            if (window.innerWidth < 640) return 2; // Mobile (2 small columns usually better than 1 giant one for posters)
+            if (window.innerWidth < 768) return 3; // Tablet Portrait
+            if (window.innerWidth < 1024) return 4; // Tablet Landscape
+            return 5; // Desktop
+        }
+        return 5;
+    };
+
+    const [gridColumns, setGridColumns] = useState(getInitialGridColumns);
+    const [showMobileFilters, setShowMobileFilters] = useState(false); // Mobile Sidebar State
+
+    // Handle Resize for Grid
+    useEffect(() => {
+        const handleResize = () => {
+            const width = window.innerWidth;
+            if (width < 640) setGridColumns(2);
+            else if (width < 768) setGridColumns(3);
+            else if (width < 1024) setGridColumns(4);
+            else setGridColumns(5);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Infinite Scroll Observer
     const [bottomRef, bottomInView] = useState(null); // Ref for bottom element
@@ -819,8 +846,33 @@ function App() {
                 </div>
             )}
 
+            {/* Mobile Filter Toggle (Floating Button) - Visible only on small screens */}
+            <button
+                className="md:hidden"
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+                style={{
+                    position: 'fixed',
+                    bottom: '20px',
+                    right: '20px',
+                    zIndex: 100,
+                    background: 'var(--accent-primary)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '56px',
+                    height: '56px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 20px rgba(139, 92, 246, 0.5)',
+                    cursor: 'pointer'
+                }}
+            >
+                {showMobileFilters ? <div style={{ fontSize: '1.5rem' }}>✕</div> : <Filter size={24} />}
+            </button>
+
             {/* Main Content */}
-            <main className="container layout-grid" style={{ paddingTop: '2rem' }}>
+            <main className="container layout-grid" style={{ paddingTop: '2rem', position: 'relative' }}>
 
                 {tierListMode ? (
                     <div style={{ gridColumn: '1 / -1', minHeight: '80vh' }}>
@@ -848,9 +900,15 @@ function App() {
                 ) : (
                     <>
 
-
                         {/* Sidebar Filters */}
-                        <aside className="filters sidebar-panel">
+                        <aside
+                            className={`filters sidebar-panel ${showMobileFilters ? 'show-mobile' : ''}`}
+                        >
+                            <div className="md:hidden flex justify-between items-center mb-4 pb-2 border-b border-gray-700">
+                                <h3 className="text-lg font-bold">Filtres</h3>
+                                <button onClick={() => setShowMobileFilters(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem' }}>✕</button>
+                            </div>
+
                             <div style={{
                                 background: 'linear-gradient(135deg, var(--accent-primary) 0%, #8b5cf6 100%)',
                                 padding: '1rem',
@@ -859,7 +917,7 @@ function App() {
                                 boxShadow: 'var(--glow-shadow)'
                             }}>
                                 <button
-                                    onClick={(e) => { e.preventDefault(); handleSurpriseMe(); }}
+                                    onClick={(e) => { e.preventDefault(); handleSurpriseMe(); setShowMobileFilters(false); }}
                                     style={{
                                         width: '100%',
                                         color: 'white',
@@ -879,7 +937,7 @@ function App() {
                             </div>
 
                             {/* Filter Header */}
-                            <div className="flex items-center gap-sm" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                            <div className="flex items-center gap-sm desktop-only" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                                 <Filter size={20} color="var(--accent-primary)" />
                                 <h3>{t.filters}</h3>
                             </div>
@@ -971,9 +1029,23 @@ function App() {
                                 />
                             </div>
 
-
-
-
+                            {/* Apply Button (Mobile Only shortcut) */}
+                            <div className="md:hidden mt-4 pt-4 border-t border-gray-700">
+                                <button
+                                    onClick={() => setShowMobileFilters(false)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        background: 'var(--bg-primary)',
+                                        color: 'var(--text-primary)',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-color)',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    Fermer
+                                </button>
+                            </div>
 
                         </aside>
 
@@ -989,8 +1061,8 @@ function App() {
                                 />
                             )}
 
-                            <div className="flex justify-between items-center" style={{ marginBottom: 'var(--spacing-md)' }}>
-                                <h2>
+                            <div className="flex justify-between items-center flex-wrap gap-2" style={{ marginBottom: 'var(--spacing-md)' }}>
+                                <h2 style={{ fontSize: '1.25rem' }}>
                                     {searchQuery ?
                                         (searchMode === 'similar' ? `${lang === 'fr' ? 'Animes similaires à' : 'Anime similar to'} "${searchQuery}"` :
                                             searchMode === 'vibe' ? `${lang === 'fr' ? 'Ambiance' : 'Vibe'} "${searchQuery}"` :
@@ -1014,25 +1086,25 @@ function App() {
                                         title={showWatchlistOnly ? "Voir tout" : "Voir mes favoris"}
                                     >
                                         <Heart size={20} className={showWatchlistOnly ? "fill-current" : ""} />
-                                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: window.innerWidth < 640 ? 'none' : 'inline' }}>
                                             {showWatchlistOnly ? (lang === 'fr' ? 'Favoris' : 'Favorites') : (lang === 'fr' ? 'Favoris' : 'Favorites')}
                                         </span>
                                     </button>
 
                                     {loading && <Loader2 className="animate-spin" size={24} style={{ marginRight: '8px' }} />}
 
-                                    {/* Grid Controls: Zoom In/Out */}
+                                    {/* Grid Controls (Hidden on small mobile if needed, but useful) */}
                                     <div className="flex bg-secondary rounded-lg p-1 gap-1" style={{ background: 'var(--bg-secondary)', borderRadius: '8px', padding: '4px', display: 'flex', alignItems: 'center' }}>
                                         <button
-                                            onClick={() => setGridColumns(prev => Math.max(2, prev - 1))}
-                                            disabled={gridColumns <= 2}
+                                            onClick={() => setGridColumns(prev => Math.max(1, prev - 1))} // Allows going down to 1
+                                            disabled={gridColumns <= 1}
                                             style={{
                                                 padding: '6px',
                                                 borderRadius: '6px',
                                                 background: 'transparent',
-                                                color: gridColumns <= 2 ? 'var(--text-muted)' : 'var(--text-secondary)',
+                                                color: gridColumns <= 1 ? 'var(--text-muted)' : 'var(--text-secondary)',
                                                 border: 'none',
-                                                cursor: gridColumns <= 2 ? 'default' : 'pointer',
+                                                cursor: gridColumns <= 1 ? 'default' : 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center'
                                             }}
@@ -1081,7 +1153,7 @@ function App() {
                                 <>
                                     <div style={{
                                         display: 'grid',
-                                        gridTemplateColumns: `repeat(${gridColumns}, 1fr)`, // Dynamic columns
+                                        gridTemplateColumns: `repeat(${gridColumns}, 1fr)`,
                                         gap: 'var(--spacing-md)'
                                     }}>
                                         {(showWatchlistOnly ? watchlist : animes).map((anime, index) => (

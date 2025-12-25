@@ -217,3 +217,86 @@ img {
 .rounded-lg {
   border-radius: var(--radius-lg);
 }
+
+/* Mobile Utilities */
+.md\:hidden {
+  display: none !important;
+}
+
+@media (max-width: 1024px) {
+  .md\:hidden {
+    display: flex !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .sidebar-panel {
+    /* Hidden by default on mobile/tablet */
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 300px;
+    height: 100vh;
+    z-index: 999;
+    background: var(--bg-secondary);
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+    transition: right 0.3s ease-in-out;
+    padding-top: 2rem;
+  }
+
+  .sidebar-panel.show-mobile {
+    right: 0;
+  }
+
+  /* Overlay for sidebar */
+  .sidebar-panel.show-mobile::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+@media (max-width: 640px) {
+  .header-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .header-grid .logo img {
+    height: 120px !important;
+    /* Smaller logo */
+  }
+
+  .layout-grid {
+    grid-template-columns: 1fr;
+    /* Stack everything */
+    padding: 0 1rem;
+  }
+
+  /* Hide sidebar completely from flow, it is now an overlay */
+  .filters.sidebar-panel {
+    grid-column: 1 / -1;
+    display: block;
+    /* It's fixed pos */
+  }
+
+  section.results {
+    width: 100%;
+  }
+
+  .header-grid .user-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+}

@@ -126,14 +126,14 @@ const HeroBanner = ({ anime, onClick, lang = 'fr' }) => {
 
 
                 <h1 style={{
-                    fontSize: '2.5rem', // Reduced from 3.5rem to prevent cutoff
+                    fontSize: 'clamp(1.5rem, 5vw, 3.5rem)', // Fluid typography
                     fontWeight: '900',
-                    lineHeight: '1.2',
-                    marginBottom: 'var(--spacing-xs)', // Tighter spacing
+                    lineHeight: '1.1',
+                    marginBottom: 'var(--spacing-xs)',
                     color: '#fff',
                     textShadow: '0 4px 10px rgba(0,0,0,0.5)',
                     display: '-webkit-box',
-                    WebkitLineClamp: 2, // Limit title to 2 lines max
+                    WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden'
                 }}>
@@ -141,13 +141,13 @@ const HeroBanner = ({ anime, onClick, lang = 'fr' }) => {
                 </h1>
 
                 <p style={{
-                    fontSize: '1rem', // Slightly smaller text
+                    fontSize: 'clamp(0.85rem, 2vw, 1rem)', // Fluid text
                     color: '#e2e8f0',
                     marginBottom: 'var(--spacing-md)',
                     maxWidth: '600px',
                     lineHeight: '1.5',
                     display: '-webkit-box',
-                    WebkitLineClamp: 2, // Reduce to 2 lines to save vertical space
+                    WebkitLineClamp: 3, // Allow a bit more text on mobile if small font
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                     textShadow: '0 2px 4px rgba(0,0,0,0.8)'
@@ -155,7 +155,7 @@ const HeroBanner = ({ anime, onClick, lang = 'fr' }) => {
                     {anime.synopsis || synopsis}
                 </p>
 
-                <div className="flex items-center gap-md">
+                <div className="flex items-center gap-md flex-wrap">
                     <button
                         onClick={onClick}
                         style={{
@@ -165,19 +165,22 @@ const HeroBanner = ({ anime, onClick, lang = 'fr' }) => {
                             background: 'var(--accent-primary)',
                             color: 'white',
                             border: 'none',
-                            padding: '10px 20px', // Slightly smaller buttons
+                            padding: '10px 20px',
                             borderRadius: '8px',
-                            fontSize: '1rem',
+                            fontSize: '0.9rem',
                             fontWeight: '600',
                             boxShadow: '0 4px 15px var(--glow-shadow)',
                             cursor: 'pointer',
-                            transition: 'transform 0.2s'
+                            transition: 'transform 0.2s',
+                            flex: 1, // Stretch on mobile
+                            minWidth: 'fit-content',
+                            justifyContent: 'center'
                         }}
                         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                     >
-                        <Info size={20} />
-                        {lang === 'fr' ? 'Voir Détails' : 'View Details'}
+                        <Info size={18} />
+                        {lang === 'fr' ? 'Détails' : 'Details'}
                     </button>
 
                     {anime.trailer?.url && (
@@ -193,19 +196,22 @@ const HeroBanner = ({ anime, onClick, lang = 'fr' }) => {
                                 backdropFilter: 'blur(10px)',
                                 color: 'white',
                                 border: '1px solid rgba(255,255,255,0.2)',
-                                padding: '10px 20px', // Slightly smaller buttons
+                                padding: '10px 20px',
                                 borderRadius: '8px',
-                                fontSize: '1rem',
+                                fontSize: '0.9rem',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 textDecoration: 'none',
-                                transition: 'background 0.2s'
+                                transition: 'background 0.2s',
+                                flex: 1, // Stretch on mobile
+                                minWidth: 'fit-content',
+                                justifyContent: 'center'
                             }}
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                         >
-                            <Play size={20} fill="white" />
-                            {lang === 'fr' ? 'Bande Annonce' : 'Watch Trailer'}
+                            <Play size={18} fill="white" />
+                            {lang === 'fr' ? 'Trailer' : 'Trailer'}
                         </a>
                     )}
                 </div>
