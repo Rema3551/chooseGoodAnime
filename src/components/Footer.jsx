@@ -22,7 +22,7 @@ const Footer = ({ lang }) => {
                 {/* Social Links */}
                 <div style={{ display: 'flex', gap: '20px' }}>
                     <a
-                        href="https://discord.gg/your-invite-link"
+                        href="https://discord.gg/2N5KCqzjV7"
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{

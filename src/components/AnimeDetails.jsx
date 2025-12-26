@@ -27,7 +27,7 @@ function AnimeDetails({ anime, onBack, t, lang, isVF = false, isFavorite, onTogg
                 {t.back}
             </button>
 
-            <div className="grid-layout" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 'var(--spacing-lg)' }}>
+            <div className="grid-layout anime-details-grid" style={{}}>
                 {/* Left Column: Image & Info */}
                 <div className="flex-col gap-md">
                     <img

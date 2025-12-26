@@ -119,44 +119,14 @@ const TierRow = ({ tier, items }) => {
     });
 
     return (
-        <div className="tier-row" style={{ display: 'flex', marginBottom: '12px', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }}>
+        <div className="tier-row">
             {/* Header Label */}
-            <div style={{
-                width: '120px',
-                minHeight: '120px',
-                background: tier.color,
-                color: '#1e293b', // Keeping dark text on colored labels is usually fine, or check contrast
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: '900',
-                fontSize: '2rem',
-                borderTopLeftRadius: '12px',
-                borderBottomLeftRadius: '12px',
-                boxShadow: 'inset 0 -4px 0 rgba(0,0,0,0.1)',
-                flexShrink: 0
-            }}>
+            <div className="tier-label" style={{ background: tier.color }}>
                 {tier.label}
             </div>
 
             {/* Droppable Area */}
-            <div ref={setNodeRef} style={{
-                flex: 1,
-                background: 'var(--bg-secondary)',
-                opacity: 0.9,
-                backdropFilter: 'blur(12px)',
-                border: '1px solid var(--border-color)',
-                borderLeft: 'none',
-                borderTopRightRadius: '12px',
-                borderBottomRightRadius: '12px',
-                padding: '16px',
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: '12px',
-                minHeight: '120px',
-                transition: 'background 0.3s ease'
-            }}>
+            <div ref={setNodeRef} className="tier-content">
                 <SortableContext items={items.map(i => i.id)} strategy={rectSortingStrategy}>
                     {items.map(item => (
                         <SortableItem key={item.id} id={item.id} anime={item.data} compact />
@@ -526,7 +496,7 @@ export default function TierListMaker({ t, lang }) {
                 }}
                 onDragEnd={handleDragEnd}
             >
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem' }}>
+                <div className="tier-list-grid" style={{}}>
 
                     {/* Tiers Column */}
                     <div id="tier-list-container" style={{ padding: '24px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
