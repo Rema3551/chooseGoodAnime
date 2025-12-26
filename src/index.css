@@ -300,3 +300,16 @@ img {
     gap: 8px;
   }
 }
+
+/* Mixer Mobile Stack */
+@media (max-width: 800px) {
+  .mixer-interface {
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+  }
+
+  .mixer-slot {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+}

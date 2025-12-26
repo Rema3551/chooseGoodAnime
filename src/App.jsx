@@ -9,6 +9,7 @@ import SurpriseReveal from './components/SurpriseReveal';
 import MultiSelect from './components/MultiSelect';
 import TierListMaker from './components/TierListMaker';
 import AnimeMixer from './components/AnimeMixer';
+import Footer from './components/Footer';
 import { VF_GOLDEN_LIST, VF_PRODUCERS } from './data/golden_list_vf';
 import { getLocalizedGenre } from './data/genre_translations';
 
@@ -1184,8 +1185,9 @@ function App() {
                 )
                 }
 
-            </main >
-        </div >
+            </main>
+            <Footer lang={lang} />
+        </div>
     );
 }
 

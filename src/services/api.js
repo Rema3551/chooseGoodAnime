@@ -110,13 +110,22 @@ export const searchAnimeByTags = async (tags, genres = [], page = 1, excludeIds 
 
 
 
+        const hasTags = tags && tags.length > 0;
+        const hasGenres = genres && genres.length > 0;
+
         const query = `
-        query ($tags: [String], $genres: [String], $page: Int, $excludeIds: [Int]) {
+        query ($page: Int, $excludeIds: [Int]${hasTags ? ', $tags: [String]' : ''}${hasGenres ? ', $genres: [String]' : ''}) {
           Page(page: $page, perPage: 20) {
             pageInfo {
               hasNextPage
             }
-            media(tag_in: $tags, genre_in: $genres, id_not_in: $excludeIds, type: ANIME, sort: POPULARITY_DESC) {
+            media(
+                ${hasTags ? 'tag_in: $tags,' : ''} 
+                ${hasGenres ? 'genre_in: $genres,' : ''} 
+                id_not_in: $excludeIds, 
+                type: ANIME, 
+                sort: POPULARITY_DESC
+            ) {
               id
               idMal
               title {
@@ -140,6 +149,15 @@ export const searchAnimeByTags = async (tags, genres = [], page = 1, excludeIds 
         }
         `;
 
+        const variables = {
+            page,
+            excludeIds
+        };
+        if (hasTags) variables.tags = tags;
+        if (hasGenres) variables.genres = genres;
+
+        // console.log('[API] Searching AniList with vars:', JSON.stringify(variables));
+
         const response = await fetch('https://graphql.anilist.co', {
             method: 'POST',
             headers: {
@@ -148,17 +166,16 @@ export const searchAnimeByTags = async (tags, genres = [], page = 1, excludeIds 
             },
             body: JSON.stringify({
                 query,
-                variables: {
-                    tags: tags.length > 0 ? tags : undefined,
-                    genres: genres && genres.length > 0 ? genres : undefined, // Pass genres if present
-                    page: page,
-                    excludeIds: excludeIds
-                }
+                variables
             })
         });
 
         const data = await response.json();
+        if (data.errors) {
+            console.error('[API] AniList Errors:', JSON.stringify(data.errors));
+        }
         const aniListResults = data.data?.Page?.media || [];
+        // console.log(`[API] Raw Results Count: ${aniListResults.length}`);
         const hasNextPage = data.data?.Page?.pageInfo?.hasNextPage || false;
 
         const mappedResults = aniListResults.map(item => ({
