@@ -52,7 +52,6 @@ const SortableItem = ({ id, anime, compact = false }) => {
         return (
             <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="tier-item">
                 <img src={anime.images.jpg.large_image_url} alt={anime.title}
-                    style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', cursor: 'grab' }}
                     draggable={false} // Disable native drag
                 />
             </div>
@@ -609,7 +608,7 @@ export default function TierListMaker({ t, lang }) {
                     <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                         <Sparkles color="#FFD700" /> Recommended for You
                     </h2>
-                    <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '1rem', scrollbarWidth: 'thin' }}>
+                    <div className="recommendations-scroll">
                         {recommendations.map(rec => (
                             <DraggableRecommendation key={rec.mal_id} anime={rec} addToBank={addToBank} />
                         ))}

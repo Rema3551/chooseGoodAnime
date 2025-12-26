@@ -344,9 +344,10 @@ img {
 }
 
 /* Tier Row Styles */
+/* Tier Row Styles */
 .tier-row {
   display: flex;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
 }
 
@@ -381,29 +382,73 @@ img {
   gap: 12px;
   min-height: 120px;
   transition: background 0.3s ease;
-  /* Prevent flex/grid blowout */
   min-width: 0;
 }
 
+/* Item Styles */
+.tier-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: grab;
+  transition: transform 0.2s;
+}
+
+.tier-item:hover img {
+  transform: scale(1.05);
+}
+
 @media (max-width: 768px) {
+
+  /* Vertical Stack for Tier Row */
+  .tier-row {
+    flex-direction: column;
+    /* Stack top-down */
+  }
+
   .tier-label {
-    width: 60px;
-    /* Smaller label on mobile */
-    font-size: 1.5rem;
-    min-height: 80px;
-    /* Allow shorter rows if empty */
+    width: 100%;
+    /* Full width bar */
+    height: 40px;
+    /* Thinner bar */
+    min-height: 40px;
+    font-size: 1.2rem;
+    border-radius: 8px 8px 0 0;
+    /* Rounded top only */
   }
 
   .tier-content {
-    min-height: 80px;
-    padding: 8px;
-    /* Less padding */
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
     gap: 8px;
+    border-radius: 0 0 8px 8px;
+    /* Rounded bottom only */
+    border-left: 1px solid var(--border-color);
+    /* Restore left border */
+    border-top: none;
+    /* Connect to label */
   }
 
   .tier-item img {
     width: 60px !important;
-    /* Smaller images on mobile */
     height: 60px !important;
   }
 }
+
+/* Recommendations Section */
+/* Recommendations Section */
+.recommendations-scroll {
+  display: flex;
+  flex-wrap: wrap;
+  /* Wrap items to next line */
+  gap: 16px;
+  /* overflow-x: auto;  REMOVED scroll */
+  padding-bottom: 1rem;
+  max-width: 100%;
+  justify-content: center;
+  /* Center items when wrapping */
+}
+
+/* Removed scrollbar styles as no longer needed */
