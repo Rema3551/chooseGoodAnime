@@ -452,3 +452,19 @@ img {
 }
 
 /* Removed scrollbar styles as no longer needed */
+
+/* Mixer Results Grid */
+.mixer-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 2rem;
+  padding: 0 1rem;
+}
+
+@media (max-width: 640px) {
+  .mixer-results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    /* Reduce gap on mobile to give more space to cards */
+  }
+}

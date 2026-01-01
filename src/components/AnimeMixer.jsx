@@ -486,12 +486,7 @@ const AnimeMixer = ({ t, lang, onBack }) => {
                                 : "Darn! That combination is chemically unstable (no results found)."}</p>
                         </div>
                     ) : (
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                            gap: '2rem',
-                            padding: '0 1rem'
-                        }}>
+                        <div className="mixer-results-grid">
                             {results.map((anime, index) => (
                                 <div key={anime.mal_id} style={{
                                     position: 'relative',
