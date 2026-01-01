@@ -431,7 +431,7 @@ const AnimeMixer = ({ t, lang, onBack }) => {
                     {loading ? (
                         <>
                             <FlaskConical className="animate-spin" style={{ marginRight: '10px' }} />
-                            {lang === 'fr' ? "SYNTHÈSE EN COURS..." : "SYNTHESIZING..."}
+                            {lang === 'fr' ? "FUSION EN COURS..." : "FUSING..."}
                         </>
                     ) : (
                         <>
@@ -495,7 +495,7 @@ const AnimeMixer = ({ t, lang, onBack }) => {
                             {results.map((anime, index) => (
                                 <div key={anime.mal_id} style={{
                                     position: 'relative',
-                                    animation: `fadeInUp 0.5s ease backwards ${index * 0.1}s`
+                                    animation: `fadeInUp 0.5s ease backwards ${index * 0.08}s`
                                 }}>
                                     <AnimeCard3D anime={anime} onClick={() => { }} />
                                     {anime.mixReason && (

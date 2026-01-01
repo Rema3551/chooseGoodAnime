@@ -176,7 +176,7 @@ export const mixAnimes = async (animeA, animeB) => {
             // Bonus: Intersection (The "Mixer" Goal)
             // If it shares traits with BOTH, huge bonus. We want the child of both.
             if (uniqueTraitsFromA.length > 0 && uniqueTraitsFromB.length > 0) {
-                score += 15; // Massive boost for being a true mix
+                score += 20; // Increased boost for being a true mix
                 reasons.push(`Combines ${uniqueTraitsFromA.slice(0, 2).join(', ')} (A) & ${uniqueTraitsFromB.slice(0, 2).join(', ')} (B)`);
             } else if (uniqueTraitsFromA.length > 0) {
                 reasons.push(`Similar to ${animeA.title} (${uniqueTraitsFromA.slice(0, 2).join(', ')})`);
