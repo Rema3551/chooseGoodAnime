@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, FlaskConical, Filter, Star, Heart, Loader2, Grid, LayoutGrid, Columns, Palette, Moon, Sun, ZoomIn, ZoomOut, Tag, Sparkles } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 
 import { getTopAnime, searchAnime, getAnimeGenres, searchAniList, getAnimeRecommendations, getAniListHighResImage } from './services/api';
 import AnimeDetails from './components/AnimeDetails';
@@ -1187,6 +1188,7 @@ function App() {
 
             </main>
             <Footer lang={lang} />
+            <Analytics />
         </div>
     );
 }
